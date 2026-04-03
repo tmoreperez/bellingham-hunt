@@ -6,357 +6,89 @@
   <title>Bellingham Scavenger Hunt</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg: #faf8f4;
-      --surface: #ffffff;
-      --surface2: #f3f0ea;
-      --border: rgba(0,0,0,0.1);
-      --border-strong: rgba(0,0,0,0.2);
-      --text: #1a1a18;
-      --text-muted: #6b6860;
-      --text-faint: #a8a49c;
-      --accent: #c8622a;
-      --accent-bg: #fdf0e8;
-      --success: #2d6a4f;
-      --success-bg: #e8f5ee;
-      --radius: 12px;
-      --radius-sm: 8px;
+      --bg: #faf8f4; --surface: #ffffff; --surface2: #f3f0ea;
+      --border: rgba(0,0,0,0.1); --border-strong: rgba(0,0,0,0.2);
+      --text: #1a1a18; --text-muted: #6b6860; --text-faint: #a8a49c;
+      --accent: #c8622a; --accent-bg: #fdf0e8;
+      --success: #2d6a4f; --success-bg: #e8f5ee;
+      --radius: 12px; --radius-sm: 8px;
     }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
 
-    html, body {
-      height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'DM Sans', sans-serif;
-      font-size: 16px;
-      line-height: 1.6;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    /* ── PIN SCREEN ── */
-    #pin-screen {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 2rem 1.5rem;
-      gap: 2rem;
-      text-align: center;
-    }
-
-    .pin-eyebrow {
-      font-size: 11px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--text-faint);
-      margin-bottom: 0.4rem;
-    }
-
-    .pin-title {
-      font-family: 'Lora', serif;
-      font-size: 28px;
-      font-weight: 600;
-      color: var(--text);
-      line-height: 1.3;
-    }
-
-    .pin-sub {
-      font-size: 14px;
-      color: var(--text-muted);
-      margin-top: 6px;
-    }
-
-    .pin-dots {
-      display: flex;
-      gap: 14px;
-      justify-content: center;
-    }
-
-    .pin-dot {
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      border: 1.5px solid var(--border-strong);
-      background: transparent;
-      transition: background 0.15s, border-color 0.15s;
-    }
-
-    .pin-dot.filled {
-      background: var(--accent);
-      border-color: var(--accent);
-    }
-
-    .pin-keypad {
-      display: grid;
-      grid-template-columns: repeat(3, 68px);
-      gap: 10px;
-    }
-
-    .key {
-      width: 68px;
-      height: 68px;
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--border);
-      background: var(--surface);
-      font-family: 'Lora', serif;
-      font-size: 22px;
-      font-weight: 400;
-      color: var(--text);
-      cursor: pointer;
-      transition: background 0.1s, transform 0.08s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
+    /* PIN */
+    #pin-screen { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1.5rem; gap: 2rem; text-align: center; }
+    .pin-eyebrow { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 0.4rem; }
+    .pin-title { font-family: 'Lora', serif; font-size: 28px; font-weight: 600; color: var(--text); line-height: 1.3; }
+    .pin-sub { font-size: 14px; color: var(--text-muted); margin-top: 6px; }
+    .pin-dots { display: flex; gap: 14px; justify-content: center; }
+    .pin-dot { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--border-strong); background: transparent; transition: background 0.15s, border-color 0.15s; }
+    .pin-dot.filled { background: var(--accent); border-color: var(--accent); }
+    .pin-keypad { display: grid; grid-template-columns: repeat(3, 68px); gap: 10px; }
+    .key { width: 68px; height: 68px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); font-family: 'Lora', serif; font-size: 22px; color: var(--text); cursor: pointer; transition: background 0.1s, transform 0.08s; display: flex; align-items: center; justify-content: center; }
     .key:hover { background: var(--surface2); }
-    .key:active { transform: scale(0.95); background: var(--surface2); }
+    .key:active { transform: scale(0.95); }
     .key.small { font-size: 12px; font-family: 'DM Sans', sans-serif; color: var(--text-muted); }
+    .pin-error { font-size: 13px; color: var(--accent); min-height: 18px; font-weight: 500; }
 
-    .pin-error {
-      font-size: 13px;
-      color: var(--accent);
-      min-height: 18px;
-      font-weight: 500;
-    }
-
-    /* ── HUNT SCREEN ── */
-    #hunt-screen {
-      display: none;
-      max-width: 520px;
-      margin: 0 auto;
-      padding: 1.5rem 1rem 4rem;
-    }
-
-    .hunt-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 1.25rem;
-      gap: 1rem;
-    }
-
-    .stop-badge {
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--text-muted);
-      background: var(--surface2);
-      border-radius: 20px;
-      padding: 4px 12px;
-      border: 1px solid var(--border);
-      white-space: nowrap;
-    }
-
+    /* HUNT */
+    #hunt-screen { display: none; max-width: 520px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+    .hunt-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; gap: 1rem; }
+    .stop-badge { font-size: 12px; font-weight: 500; color: var(--text-muted); background: var(--surface2); border-radius: 20px; padding: 4px 12px; border: 1px solid var(--border); white-space: nowrap; }
     .progress-wrap { flex: 1; }
-    .progress-bg {
-      height: 3px;
-      background: var(--border);
-      border-radius: 2px;
-      overflow: hidden;
-    }
-    .progress-fill {
-      height: 100%;
-      background: var(--accent);
-      border-radius: 2px;
-      transition: width 0.5s ease;
-    }
-
-    .pips {
-      display: flex;
-      gap: 5px;
-      margin-bottom: 1.5rem;
-      flex-wrap: wrap;
-    }
-
-    .pip {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--border);
-      border: 1px solid var(--border-strong);
-      transition: background 0.3s;
-    }
+    .progress-bg { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.5s ease; }
+    .pips { display: flex; gap: 5px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .pip { width: 7px; height: 7px; border-radius: 50%; background: var(--border); border: 1px solid var(--border-strong); transition: background 0.3s; }
     .pip.done { background: var(--accent); border-color: var(--accent); }
     .pip.active { background: var(--text-muted); border-color: var(--text-muted); }
 
-    /* Cards */
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.25rem;
-      margin-bottom: 0.75rem;
-    }
+    #map { width: 100%; height: 240px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 0.75rem; }
 
-    .card-label {
-      font-size: 10px;
-      font-weight: 500;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--text-faint);
-      margin-bottom: 0.6rem;
-    }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 0.75rem; }
+    .card-label { font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 0.6rem; }
+    .clue-text { font-family: 'Lora', serif; font-size: 15px; line-height: 1.85; color: var(--text); white-space: pre-line; }
 
-    .clue-text {
-      font-family: 'Lora', serif;
-      font-size: 15px;
-      line-height: 1.85;
-      color: var(--text);
-      white-space: pre-line;
-    }
+    .geo-status { font-size: 13px; color: var(--text-muted); text-align: center; padding: 0.6rem 1rem; border-radius: var(--radius-sm); margin-bottom: 0.75rem; background: var(--surface2); }
+    .geo-status.close { color: var(--success); font-weight: 500; background: var(--success-bg); }
+    .geo-status.err { color: var(--accent); background: var(--accent-bg); }
 
-    .task-card {
-      background: var(--accent-bg);
-      border: 1px solid rgba(200, 98, 42, 0.2);
-      border-radius: var(--radius);
-      padding: 1.25rem;
-      margin-bottom: 0.75rem;
-    }
+    .reveal-section { display: none; }
+    .reveal-section.visible { display: block; animation: fadeUp 0.4s ease; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
+    .arrival-banner { background: var(--success-bg); border: 1px solid rgba(45,106,79,0.25); border-radius: var(--radius); padding: 1.1rem 1.25rem; margin-bottom: 0.75rem; }
+    .arrival-banner .arr-label { font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--success); margin-bottom: 0.3rem; opacity: 0.8; }
+    .arrival-banner .arr-name { font-family: 'Lora', serif; font-size: 20px; font-weight: 600; color: var(--text); }
+
+    .task-card { background: var(--accent-bg); border: 1px solid rgba(200,98,42,0.2); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 0.75rem; }
     .task-card .card-label { color: var(--accent); opacity: 0.8; }
+    .task-text { font-size: 15px; color: var(--text); line-height: 1.65; }
 
-    .task-text {
-      font-size: 15px;
-      color: var(--text);
-      line-height: 1.65;
-      font-weight: 400;
-    }
+    .next-clue-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 0.75rem; }
 
-    /* Location row */
-    .loc-row {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1rem 1.25rem;
-      margin-bottom: 0.75rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-    }
-
-    .loc-name {
-      font-weight: 500;
-      font-size: 15px;
-      color: var(--text);
-    }
-
-    .loc-addr {
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-
-    .nav-btn {
-      padding: 8px 16px;
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--border-strong);
-      background: var(--surface);
-      color: var(--text);
-      font-size: 13px;
-      font-weight: 500;
-      font-family: 'DM Sans', sans-serif;
-      text-decoration: none;
-      white-space: nowrap;
-      transition: background 0.1s;
-      cursor: pointer;
-    }
-    .nav-btn:hover { background: var(--surface2); }
-
-    /* Geo status */
-    .geo-status {
-      font-size: 13px;
-      color: var(--text-muted);
-      text-align: center;
-      padding: 0.5rem;
-      min-height: 2rem;
-    }
-    .geo-status.close {
-      color: var(--success);
-      font-weight: 500;
-      background: var(--success-bg);
-      border-radius: var(--radius-sm);
-    }
-    .geo-status.err { color: var(--accent); }
-
-    /* Unlock section */
-    .unlock-section { display: none; animation: fadeUp 0.3s ease; }
-    .unlock-section.visible { display: block; }
-
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .next-btn {
-      width: 100%;
-      padding: 14px;
-      border-radius: var(--radius);
-      border: 1px solid var(--border-strong);
-      background: var(--text);
-      color: var(--bg);
-      font-size: 15px;
-      font-weight: 500;
-      font-family: 'DM Sans', sans-serif;
-      cursor: pointer;
-      margin-top: 0.25rem;
-      transition: opacity 0.15s, transform 0.1s;
-    }
+    .next-btn { width: 100%; padding: 14px; border-radius: var(--radius); border: 1px solid var(--border-strong); background: var(--text); color: var(--bg); font-size: 15px; font-weight: 500; font-family: 'DM Sans', sans-serif; cursor: pointer; margin-top: 0.25rem; transition: opacity 0.15s, transform 0.1s; }
     .next-btn:hover { opacity: 0.85; }
     .next-btn:active { transform: scale(0.98); }
 
-    .manual-link {
-      text-align: center;
-      margin-top: 0.6rem;
-    }
-    .manual-link button {
-      background: none;
-      border: none;
-      font-size: 13px;
-      color: var(--text-faint);
-      cursor: pointer;
-      font-family: 'DM Sans', sans-serif;
-      text-decoration: underline;
-    }
+    .manual-link { text-align: center; margin-top: 0.75rem; }
+    .manual-link button { background: none; border: none; font-size: 13px; color: var(--text-faint); cursor: pointer; font-family: 'DM Sans', sans-serif; text-decoration: underline; }
     .manual-link button:hover { color: var(--text-muted); }
 
-    /* Finish screen */
-    .finish {
-      text-align: center;
-      padding: 2rem 1rem;
-    }
-    .finish h2 {
-      font-family: 'Lora', serif;
-      font-size: 26px;
-      font-weight: 600;
-      margin-bottom: 0.75rem;
-    }
-    .finish p {
-      font-size: 15px;
-      color: var(--text-muted);
-      line-height: 1.7;
-      max-width: 320px;
-      margin: 0 auto;
-    }
-    .finish .emoji-row {
-      font-size: 28px;
-      margin-bottom: 1rem;
-      letter-spacing: 6px;
-    }
+    .finish { text-align: center; padding: 2rem 1rem; }
+    .finish h2 { font-family: 'Lora', serif; font-size: 26px; font-weight: 600; margin-bottom: 0.75rem; }
+    .finish p { font-size: 15px; color: var(--text-muted); line-height: 1.7; max-width: 320px; margin: 0 auto; }
+    .finish .emoji-row { font-size: 28px; margin-bottom: 1rem; letter-spacing: 6px; }
 
-    @media (max-width: 400px) {
-      .pin-keypad { grid-template-columns: repeat(3, 60px); }
-      .key { width: 60px; height: 60px; }
-    }
+    @media (max-width: 400px) { .pin-keypad { grid-template-columns: repeat(3, 60px); } .key { width: 60px; height: 60px; } }
   </style>
 </head>
 <body>
 
-<!-- PIN SCREEN -->
 <div id="pin-screen">
   <div>
     <div class="pin-eyebrow">Bellingham, WA</div>
@@ -364,10 +96,8 @@
     <div class="pin-sub">Enter the PIN to unlock your adventure</div>
   </div>
   <div class="pin-dots">
-    <div class="pin-dot" id="d0"></div>
-    <div class="pin-dot" id="d1"></div>
-    <div class="pin-dot" id="d2"></div>
-    <div class="pin-dot" id="d3"></div>
+    <div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div>
+    <div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div>
   </div>
   <div class="pin-keypad">
     <button class="key" onclick="pressKey('1')">1</button>
@@ -386,7 +116,6 @@
   <div class="pin-error" id="pin-error"></div>
 </div>
 
-<!-- HUNT SCREEN -->
 <div id="hunt-screen">
   <div class="hunt-top">
     <span class="stop-badge" id="stop-label">Stop 1 of 9</span>
@@ -399,222 +128,236 @@
 </div>
 
 <script>
-  const PIN = '1117';
-  const RADIUS = 150;
+const PIN = '1117';
+const RADIUS = 150;
 
-  const stops = [
-    {
-      name: "Lafeen's Family Pride Donuts",
-      address: "1466 Electric Ave, Bellingham, WA",
-      lat: 48.7496, lng: -122.4248833,
-      clue: "Go nuts for donuts, let's begin this ride,\nWith a round-boy treat with air or jelly inside.\nSprinkles, sprankles, or frosting on top,\nIt's breakfast, dessert, and Tim's favorite spot.",
-      task: "Buy a donut — sprinkles, jelly, or whatever calls to you. No skipping the frosting.",
-      maps: "https://maps.google.com/?q=Lafeen's+Donuts+1466+Electric+Ave+Bellingham+WA"
-    },
-    {
-      name: "Whatcom Falls Park",
-      address: "Whatcom Falls Park, Bellingham, WA",
-      lat: 48.7522116, lng: -122.4282212,
-      clue: "A gush-ified wonder of mist-y white foam,\nWhere oil pipelines and lil ducky-boys roam.\nThe bridge where the water is definitely loud,\nA splash-tastic rumble, moist fishery crowd.",
-      task: "Take a group photo at the falls and send it to your Nanaimo friends. Make it dramatic.",
-      maps: "https://maps.google.com/?q=Whatcom+Falls+Park+Bellingham+WA"
-    },
-    {
-      name: "Big Rock Garden Park",
-      address: "2900 Sylvan St, Bellingham, WA",
-      lat: 48.7684343, lng: -122.42183,
-      clue: "A moss-covered forest of stone-ish delights,\nWith statue-y creatures and garden-y sights.\nDon't trip on a pebble, don't tip a rock-ette,\nA sculpture-y park visit we haven't been yet!",
-      task: "Find the weirdest sculpture in the garden and strike the exact same pose. Photo required.",
-      maps: "https://maps.google.com/?q=Big+Rock+Garden+Park+2900+Sylvan+St+Bellingham+WA"
-    },
-    {
-      name: "Otherlands Beer",
-      address: "2121 Humboldt St, Bellingham, WA",
-      lat: 48.7542754, lng: -122.4740893,
-      clue: "A Ukrainian nook for the Nanaimo friend pack,\nWhere the saison-y bubbles will kick you right back.\nIt's a porn-watching hotspot and upstairsy-chic,\nThe coziest spot for a meat-tarded beer geek.",
-      task: "Order a beer flight and do a full group taste-swap. Everyone tries everyone else's.",
-      maps: "https://maps.google.com/?q=Otherlands+Beer+2121+Humboldt+St+Bellingham+WA"
-    },
-    {
-      name: "Wander Brewing",
-      address: "1807 Dean Ave, Bellingham, WA",
-      lat: 48.7526145, lng: -122.4793686,
-      clue: "For all those who roam, and for those who are thirsty,\nFor those not lost, seeking drink bubbley bursty,\nIn a warehouse-y hall of stouts, ales and porter-ortlay,\nIt's a vibe, it's a place, drinks on S. Gortlay!",
-      task: "Everyone orders something they've never tried before. No safe choices allowed.",
-      maps: "https://maps.google.com/?q=Wander+Brewing+1807+Dean+Ave+Bellingham+WA"
-    },
-    {
-      name: "Henderson Books",
-      address: "116 Grand Ave, Bellingham, WA",
-      lat: 48.7512, lng: -122.4794,
-      clue: "A paper-y mountain of dustified lore,\nWith billions and billions of pagies or more!\nYou'll wiggle-dy walk through a book-ish abyss,\nIt's a shelf-tastic maze that you'll literally miss.",
-      task: "Each person finds a book they'd actually read for under $5. No purchase required — just find it.",
-      maps: "https://maps.google.com/?q=Henderson+Books+116+Grand+Ave+Bellingham+WA"
-    },
-    {
-      name: "Brazen Shop + Studio",
-      address: "1306 Cornwall Ave, Bellingham, WA",
-      lat: 48.7499181, lng: -122.4786426,
-      clue: "A glitter-y haunt for the shiny-ish things,\nWith dangle-dy hoops and some finger-y rings.\nIt's for cat dads and dog moms, it's hipstery cool,\nLike a Bolinas-blonde art kid that arrives late to school.",
-      task: "Find the best smell in the store. Group vote. One winner. No ties.",
-      maps: "https://maps.google.com/?q=Brazen+Shop+Studio+1306+Cornwall+Ave+Bellingham+WA"
-    },
-    {
-      name: "Worn Again Thrift",
-      address: "101 E Holly St, Bellingham, WA",
-      lat: 48.7497213, lng: -122.4788525,
-      clue: "The threads are quite vintagey, cool-ish, and rare,\nBut the price-tag-gy numbers might give you a scare!\nIt's thrift-ish in name but boutique-y in cost,\nYour whole-entire wallet might actually get lost.",
-      task: "Find the most outrageously overpriced item and photograph the tag. Whoever finds the highest wins.",
-      maps: "https://maps.google.com/?q=Worn+Again+Thrift+101+E+Holly+St+Bellingham+WA"
-    },
-    {
-      name: "Waterfront Pump Track",
-      address: "1200 Bay St, Bellingham, WA",
-      lat: 48.749914, lng: -122.4839733,
-      clue: "By the giant-y ball, not shiny or chrome-ish,\nWhere seagull-y birds make a salty-ish home-ish.\nThe pump track next door is wiggly and dickish —\nDon't believe me? Just google, the shape is quite prickish.",
-      task: "Everyone rides one lap of the pump track. No chickening out. This is non-negotiable.",
-      maps: "https://maps.google.com/?q=Waterfront+Pump+Track+1200+Bay+St+Bellingham+WA"
-    }
-  ];
+const stops = [
+  {
+    name: "Lafeen's Family Pride Donuts",
+    lat: 48.7496, lng: -122.4248833,
+    clue: "Go nuts for donuts, let's begin this ride,\nWith a round-boy treat with air or jelly inside.\nSprinkles, sprankles, or frosting on top,\nIt's breakfast, dessert, and Tim's favorite spot.",
+    task: "Buy a donut — sprinkles, jelly, or whatever calls to you. No skipping the frosting.",
+    nextClue: "A gush-ified wonder of mist-y white foam,\nWhere oil pipelines and lil ducky-boys roam.\nThe bridge where the water is definitely loud,\nA splash-tastic rumble, moist fishery crowd."
+  },
+  {
+    name: "Whatcom Falls Park",
+    lat: 48.7522116, lng: -122.4282212,
+    clue: "A gush-ified wonder of mist-y white foam,\nWhere oil pipelines and lil ducky-boys roam.\nThe bridge where the water is definitely loud,\nA splash-tastic rumble, moist fishery crowd.",
+    task: "Take a group photo at the falls and send it to your Nanaimo friends. Make it dramatic.",
+    nextClue: "A moss-covered forest of stone-ish delights,\nWith statue-y creatures and garden-y sights.\nDon't trip on a pebble, don't tip a rock-ette,\nA sculpture-y park visit we haven't been yet!"
+  },
+  {
+    name: "Big Rock Garden Park",
+    lat: 48.7684343, lng: -122.42183,
+    clue: "A moss-covered forest of stone-ish delights,\nWith statue-y creatures and garden-y sights.\nDon't trip on a pebble, don't tip a rock-ette,\nA sculpture-y park visit we haven't been yet!",
+    task: "Find the weirdest sculpture in the garden and strike the exact same pose. Photo required.",
+    nextClue: "A Ukrainian nook for the Nanaimo friend pack,\nWhere the saison-y bubbles will kick you right back.\nIt's a porn-watching hotspot and upstairsy-chic,\nThe coziest spot for a meat-tarded beer geek."
+  },
+  {
+    name: "Otherlands Beer",
+    lat: 48.7542754, lng: -122.4740893,
+    clue: "A Ukrainian nook for the Nanaimo friend pack,\nWhere the saison-y bubbles will kick you right back.\nIt's a porn-watching hotspot and upstairsy-chic,\nThe coziest spot for a meat-tarded beer geek.",
+    task: "Order a beer flight and do a full group taste-swap. Everyone tries everyone else's.",
+    nextClue: "For all those who roam, and for those who are thirsty,\nFor those not lost, seeking drink bubbley bursty,\nIn a warehouse-y hall of stouts, ales and porter-ortlay,\nIt's a vibe, it's a place, drinks on S. Gortlay!"
+  },
+  {
+    name: "Wander Brewing",
+    lat: 48.7526145, lng: -122.4793686,
+    clue: "For all those who roam, and for those who are thirsty,\nFor those not lost, seeking drink bubbley bursty,\nIn a warehouse-y hall of stouts, ales and porter-ortlay,\nIt's a vibe, it's a place, drinks on S. Gortlay!",
+    task: "Everyone orders something they've never tried before. No safe choices allowed.",
+    nextClue: "A paper-y mountain of dustified lore,\nWith billions and billions of pagies or more!\nYou'll wiggle-dy walk through a book-ish abyss,\nIt's a shelf-tastic maze that you'll literally miss."
+  },
+  {
+    name: "Henderson Books",
+    lat: 48.7512, lng: -122.4794,
+    clue: "A paper-y mountain of dustified lore,\nWith billions and billions of pagies or more!\nYou'll wiggle-dy walk through a book-ish abyss,\nIt's a shelf-tastic maze that you'll literally miss.",
+    task: "Each person finds a book they'd actually read for under $5. No purchase required — just find it.",
+    nextClue: "A glitter-y haunt for the shiny-ish things,\nWith dangle-dy hoops and some finger-y rings.\nIt's for cat dads and dog moms, it's hipstery cool,\nLike a Bolinas-blonde art kid that arrives late to school."
+  },
+  {
+    name: "Brazen Shop + Studio",
+    lat: 48.7499181, lng: -122.4786426,
+    clue: "A glitter-y haunt for the shiny-ish things,\nWith dangle-dy hoops and some finger-y rings.\nIt's for cat dads and dog moms, it's hipstery cool,\nLike a Bolinas-blonde art kid that arrives late to school.",
+    task: "Find the best smell in the store. Group vote. One winner. No ties.",
+    nextClue: "The threads are quite vintagey, cool-ish, and rare,\nBut the price-tag-gy numbers might give you a scare!\nIt's thrift-ish in name but boutique-y in cost,\nYour whole-entire wallet might actually get lost."
+  },
+  {
+    name: "Worn Again Thrift",
+    lat: 48.7497213, lng: -122.4788525,
+    clue: "The threads are quite vintagey, cool-ish, and rare,\nBut the price-tag-gy numbers might give you a scare!\nIt's thrift-ish in name but boutique-y in cost,\nYour whole-entire wallet might actually get lost.",
+    task: "Find the most outrageously overpriced item and photograph the tag. Whoever finds the highest wins.",
+    nextClue: "By the giant-y ball, not shiny or chrome-ish,\nWhere seagull-y birds make a salty-ish home-ish.\nThe pump track next door is wiggly and dickish —\nDon't believe me? Just google, the shape is quite prickish."
+  },
+  {
+    name: "Waterfront Pump Track",
+    lat: 48.749914, lng: -122.4839733,
+    clue: "By the giant-y ball, not shiny or chrome-ish,\nWhere seagull-y birds make a salty-ish home-ish.\nThe pump track next door is wiggly and dickish —\nDon't believe me? Just google, the shape is quite prickish.",
+    task: "Everyone rides one lap of the pump track. No chickening out. This is non-negotiable.",
+    nextClue: null
+  }
+];
 
-  let pin = '';
-  let current = 0;
-  let unlocked = false;
-  let watchId = null;
+let pin = '';
+let current = 0;
+let unlocked = false;
+let watchId = null;
+let map = null;
+let userMarker = null;
 
-  function pressKey(k) {
-    const err = document.getElementById('pin-error');
-    err.textContent = '';
-    if (k === 'clear') { pin = ''; }
-    else if (k === 'back') { pin = pin.slice(0, -1); }
-    else if (pin.length < 4) { pin += k; }
-    updateDots();
-    if (pin.length === 4) {
-      if (pin === PIN) {
-        document.getElementById('pin-screen').style.display = 'none';
-        const hs = document.getElementById('hunt-screen');
-        hs.style.display = 'block';
-        renderStop();
-      } else {
-        err.textContent = 'Wrong PIN — try again.';
-        pin = '';
-        setTimeout(updateDots, 0);
-      }
+function pressKey(k) {
+  const err = document.getElementById('pin-error');
+  err.textContent = '';
+  if (k === 'clear') pin = '';
+  else if (k === 'back') pin = pin.slice(0, -1);
+  else if (pin.length < 4) pin += k;
+  updateDots();
+  if (pin.length === 4) {
+    if (pin === PIN) {
+      document.getElementById('pin-screen').style.display = 'none';
+      document.getElementById('hunt-screen').style.display = 'block';
+      renderStop();
+    } else {
+      err.textContent = 'Wrong PIN — try again.';
+      pin = '';
+      setTimeout(updateDots, 0);
     }
   }
+}
 
-  function updateDots() {
-    for (let i = 0; i < 4; i++) {
-      document.getElementById('d' + i).classList.toggle('filled', i < pin.length);
-    }
-  }
+function updateDots() {
+  for (let i = 0; i < 4; i++)
+    document.getElementById('d' + i).classList.toggle('filled', i < pin.length);
+}
 
-  function renderStop() {
-    const s = stops[current];
-    const total = stops.length;
-    unlocked = false;
+function renderStop() {
+  const s = stops[current];
+  const total = stops.length;
+  unlocked = false;
 
-    document.getElementById('stop-label').textContent = `Stop ${current + 1} of ${total}`;
-    document.getElementById('progress-fill').style.width = ((current + 1) / total * 100) + '%';
+  document.getElementById('stop-label').textContent = `Stop ${current + 1} of ${total}`;
+  document.getElementById('progress-fill').style.width = ((current + 1) / total * 100) + '%';
+  document.getElementById('pips').innerHTML = stops.map((_, i) =>
+    `<div class="pip ${i < current ? 'done' : i === current ? 'active' : ''}"></div>`
+  ).join('');
 
-    document.getElementById('pips').innerHTML = stops.map((_, i) =>
-      `<div class="pip ${i < current ? 'done' : i === current ? 'active' : ''}"></div>`
-    ).join('');
+  document.getElementById('stop-content').innerHTML = `
+    <div id="map"></div>
 
-    const isLast = current === total - 1;
+    <div class="card">
+      <div class="card-label">Your clue</div>
+      <div class="clue-text">${s.clue.replace(/\n/g,'<br>')}</div>
+    </div>
 
-    document.getElementById('stop-content').innerHTML = `
-      <div class="card">
-        <div class="card-label">Your clue</div>
-        <div class="clue-text">${s.clue.replace(/\n/g, '<br>')}</div>
+    <div class="geo-status" id="geo-status">Locating you…</div>
+
+    <div class="reveal-section" id="reveal-arrival">
+      <div class="arrival-banner">
+        <div class="arr-label">You've arrived at</div>
+        <div class="arr-name">${s.name}</div>
       </div>
+    </div>
 
-      <div class="loc-row">
-        <div>
-          <div class="loc-name">${s.name}</div>
-          <div class="loc-addr">${s.address}</div>
+    <div class="reveal-section" id="reveal-task">
+      <div class="task-card">
+        <div class="card-label">Your task</div>
+        <div class="task-text">${s.task}</div>
+      </div>
+    </div>
+
+    ${s.nextClue ? `
+      <div class="reveal-section" id="reveal-next">
+        <div class="next-clue-card">
+          <div class="card-label">Clue to your next stop</div>
+          <div class="clue-text">${s.nextClue.replace(/\n/g,'<br>')}</div>
         </div>
-        <a class="nav-btn" href="${s.maps}" target="_blank">Navigate ↗</a>
+        <button class="next-btn" onclick="nextStop()">Head out →</button>
       </div>
-
-      <div class="geo-status" id="geo-status">Checking your location…</div>
-
-      <div class="unlock-section" id="unlock-section">
-        <div class="task-card">
-          <div class="card-label">Your task</div>
-          <div class="task-text">${s.task}</div>
+    ` : `
+      <div class="reveal-section" id="reveal-next">
+        <div class="finish">
+          <div class="emoji-row">🍩🍺📚🚴</div>
+          <h2>You did it!</h2>
+          <p>You've conquered the Bellingham scavenger hunt. Donuts, waterfalls, beer, books, and a pump track lap. Legends, all of you.</p>
         </div>
-        ${isLast
-          ? `<div class="finish">
-               <div class="emoji-row">🍩🍺📚🚴</div>
-               <h2>You did it!</h2>
-               <p>You've conquered the Bellingham scavenger hunt. Donuts, waterfalls, beer, books, and a pump track lap. Legends, all of you.</p>
-             </div>`
-          : `<button class="next-btn" onclick="nextStop()">Next stop →</button>`
-        }
       </div>
+    `}
 
-      <div class="manual-link" id="manual-link">
-        <button onclick="manualUnlock()">I'm here — unlock manually</button>
-      </div>
-    `;
+    <div class="manual-link" id="manual-link">
+      <button onclick="manualUnlock()">I'm here — unlock manually</button>
+    </div>
+  `;
 
-    startGeo();
-    window.scrollTo(0, 0);
-  }
+  initMap(s.lat, s.lng);
+  startGeo();
+  window.scrollTo(0, 0);
+}
 
-  function startGeo() {
-    if (watchId !== null) navigator.geolocation.clearWatch(watchId);
-    if (!navigator.geolocation) {
-      setGeoStatus('Location unavailable — use manual unlock.', 'err');
-      return;
+function initMap(lat, lng) {
+  if (map) { map.remove(); map = null; userMarker = null; }
+  setTimeout(() => {
+    map = L.map('map', { zoomControl: true, attributionControl: false }).setView([lat, lng], 16);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+    const destIcon = L.divIcon({
+      html: `<div style="width:14px;height:14px;background:#c8622a;border-radius:50%;border:2.5px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.35);"></div>`,
+      className: '', iconAnchor: [7, 7]
+    });
+    L.marker([lat, lng], { icon: destIcon }).addTo(map);
+  }, 50);
+}
+
+function updateUserOnMap(lat, lng) {
+  if (!map) return;
+  const userIcon = L.divIcon({
+    html: `<div style="width:12px;height:12px;background:#3388ff;border-radius:50%;border:2.5px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.3);"></div>`,
+    className: '', iconAnchor: [6, 6]
+  });
+  if (userMarker) userMarker.setLatLng([lat, lng]);
+  else userMarker = L.marker([lat, lng], { icon: userIcon }).addTo(map);
+}
+
+function startGeo() {
+  if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+  if (!navigator.geolocation) { setGeoStatus('Location unavailable — use manual unlock.', 'err'); return; }
+  watchId = navigator.geolocation.watchPosition(pos => {
+    const { latitude: la, longitude: lo } = pos.coords;
+    updateUserOnMap(la, lo);
+    if (!unlocked) {
+      const d = dist(la, lo, stops[current].lat, stops[current].lng);
+      if (d <= RADIUS) { setGeoStatus("You're here!", 'close'); unlock(); }
+      else setGeoStatus(`About ${Math.round(d)}m away…`, '');
     }
-    watchId = navigator.geolocation.watchPosition(pos => {
-      const d = dist(pos.coords.latitude, pos.coords.longitude, stops[current].lat, stops[current].lng);
-      const el = document.getElementById('geo-status');
-      if (!el) return;
-      if (d <= RADIUS) {
-        setGeoStatus("You're here!", 'close');
-        unlock();
-      } else {
-        setGeoStatus(`About ${Math.round(d)}m away…`, '');
-      }
-    }, () => {
-      setGeoStatus('Location unavailable — use manual unlock.', 'err');
-    }, { enableHighAccuracy: true, maximumAge: 5000 });
-  }
+  }, () => setGeoStatus('Location unavailable — use manual unlock.', 'err'),
+  { enableHighAccuracy: true, maximumAge: 5000 });
+}
 
-  function setGeoStatus(msg, cls) {
-    const el = document.getElementById('geo-status');
-    if (!el) return;
-    el.textContent = msg;
-    el.className = 'geo-status ' + cls;
-  }
+function setGeoStatus(msg, cls) {
+  const el = document.getElementById('geo-status');
+  if (el) { el.textContent = msg; el.className = 'geo-status ' + cls; }
+}
 
-  function unlock() {
-    if (unlocked) return;
-    unlocked = true;
-    const u = document.getElementById('unlock-section');
-    const m = document.getElementById('manual-link');
-    if (u) u.classList.add('visible');
-    if (m) m.style.display = 'none';
-  }
+function unlock() {
+  if (unlocked) return;
+  unlocked = true;
+  const ml = document.getElementById('manual-link');
+  if (ml) ml.style.display = 'none';
+  setTimeout(() => { const el = document.getElementById('reveal-arrival'); if (el) el.classList.add('visible'); }, 0);
+  setTimeout(() => { const el = document.getElementById('reveal-task');    if (el) el.classList.add('visible'); }, 700);
+  setTimeout(() => { const el = document.getElementById('reveal-next');    if (el) el.classList.add('visible'); }, 1400);
+}
 
-  function manualUnlock() { unlock(); }
+function manualUnlock() { unlock(); }
 
-  function nextStop() {
-    if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
-    current++;
-    renderStop();
-  }
+function nextStop() {
+  if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+  current++;
+  renderStop();
+}
 
-  function dist(lat1, lon1, lat2, lon2) {
-    const R = 6371000;
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2;
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  }
+function dist(lat1, lon1, lat2, lon2) {
+  const R = 6371000, dLat = (lat2-lat1)*Math.PI/180, dLon = (lon2-lon1)*Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
 </script>
 </body>
 </html>
